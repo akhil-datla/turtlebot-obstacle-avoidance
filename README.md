@@ -4,15 +4,7 @@ A MATLAB implementation of Lyapunov-based hybrid obstacle avoidance for TurtleBo
 
 ## Overview
 
-This project implements a hybrid controller that enables two TurtleBot robots to navigate to a common goal while avoiding a circular obstacle. The robots take different paths (homotopy classes) around the obstacle using mode-dependent Lyapunov functions with logarithmic barrier potentials.
-
-### Key Features
-
-- **Hybrid Control**: Flow/jump logic with hysteresis for robust mode switching
-- **Barrier Functions**: Logarithmic barrier potentials prevent collision with obstacles
-- **Dual-Path Navigation**: Two robots navigate via different homotopy classes (above/below obstacle)
-- **Real-Time Control**: Integration with Vicon motion capture for real TurtleBot experiments
-- **Simulation Mode**: Virtual simulation for testing and parameter tuning
+This project implements a hybrid controller that enables two TurtleBot robots to navigate to a common goal while avoiding a circular obstacle. The robots take different paths around the obstacle using mode-dependent Lyapunov functions with logarithmic barrier potentials.
 
 ## Theoretical Background
 
