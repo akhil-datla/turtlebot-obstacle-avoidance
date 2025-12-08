@@ -2,8 +2,7 @@
 %   Virtual simulation of two point-mass "Turtlebots" using the hybrid
 %   Lyapunov-based obstacle avoidance controller from Sanfelice et al. (ACC
 %   2006). This script implements the flow/jump sets with the
-%   synergistic potentials (Eq. 11) and the distance functions (Eq. 10) that
-%   separate two homotopy classes around a circular obstacle.
+%   synergistic potentials (Eq. 11) and the distance functions (Eq. 10).
 
 clear; clc; close all;
 
