@@ -4,7 +4,7 @@ function [V1, V2, gradV1, gradV2] = hybrid_potentials(x, params)
 %       V_q(x) = 0.5*||x - a||^2 + B(d_q(x))
 %   where d_q(x) is the distance to the complement of the free set O_q and
 %   B(·) is the logarithmic barrier keeping trajectories away from the obstacle
-%   and switching manifold. Modes correspond to two homotopy classes:
+%   and switching manifold. Modes correspond to two classes:
 %       q = 1 : O_1 = wedge region for going ABOVE the obstacle
 %       q = 2 : O_2 = wedge region for going BELOW the obstacle
 %   Per Figure 5 in the paper, the regions are wedges emanating from the
