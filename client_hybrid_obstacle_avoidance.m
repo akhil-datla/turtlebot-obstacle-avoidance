@@ -52,7 +52,7 @@ k_theta = 1.5;
 
 noise_std = 0.0; % measurement noise is already present via Vicon
 
-% Initial modes select distinct homotopy classes around the obstacle
+% Initial modes select distinct classes around the obstacle
 q_bot1 = 1; % takes upper path around obstacle
 q_bot2 = 2; % takes lower path around obstacle
 
