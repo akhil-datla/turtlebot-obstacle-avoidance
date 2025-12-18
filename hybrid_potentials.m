@@ -64,14 +64,24 @@ end
 
 function [d, grad_d] = distance_to_mode_complement(x, q, params)
 % distance_to_mode_complement  Computes d_q(x) and its gradient.
-%   
+%
 %   Per Sanfelice et al. (ACC 2006) Figure 5, the regions O_1 and O_2 are
-%   WEDGES emanating from the obstacle, not half-planes:
-%       O_1 = points that can reach goal by going ABOVE the obstacle
-%       O_2 = points that can reach goal by going BELOW the obstacle
-%   
-%   Both regions include the goal and all points past the obstacle.
-%   The wedge angle determines how "wide" each region is.
+%   defined by two lines through the obstacle center (cx, cy):
+%       Line A: y = cy + tan(θ)*(x - cx)  [positive slope, at y=-1 when x=0]
+%       Line B: y = cy - tan(θ)*(x - cx)  [negative slope, at y=+1 when x=0]
+%
+%   Mode regions (for x < cx, i.e., approaching the obstacle):
+%       O_1 = points ABOVE Line A (upper path around obstacle)
+%       O_2 = points BELOW Line B (lower path around obstacle)
+%
+%   At x=0 with cx=1, cy=0, θ=π/4:
+%       O_1: y > -1  (includes robot at y=0.5)
+%       O_2: y < +1  (includes robot at y=-0.5)
+%       Overlap: -1 < y < 1 (synergistic region)
+%
+%   d_q(x) is the distance to the COMPLEMENT of O_q:
+%       - If x is inside O_q: d_q = distance to boundary (positive)
+%       - If x is outside O_q (in complement): d_q ≈ 0, triggering barrier
 
 % Minimum distance threshold to avoid singularities in barrier function
 MIN_DIST = 1e-6;
@@ -111,63 +121,76 @@ if x(1) > cx + R
 end
 
 % Compute distance to wedge boundary line
-% Line passes through (cx, cy) with slope ±tan(theta_wedge)
+% Lines pass through (cx, cy) with slope ±tan(theta_wedge)
+slope = tan(theta_wedge);
+norm_factor = sqrt(slope^2 + 1);
+
 switch q
     case 1
-        % O_1: below the upper wedge line (y - cy < tan(θ) * (x - cx))
-        % Wedge line: y = cy + tan(θ) * (x - cx)
-        % Distance to line ax + by + c = 0 where:
-        %   tan(θ)*(x - cx) - (y - cy) = 0
-        %   tan(θ)*x - y - tan(θ)*cx + cy = 0
-        slope = tan(theta_wedge);
-        % Signed distance (positive when below line, negative when above)
-        signed_dist = (slope * (x(1) - cx) - (x(2) - cy)) / sqrt(slope^2 + 1);
-        
+        % O_1: ABOVE Line A (for upper path around obstacle)
+        % Line A: y = cy + tan(θ)*(x - cx)  [positive slope line]
+        % At x=0 with cx=1: y = 0 + 1*(-1) = -1  (line is BELOW origin)
+        % At x=2: y = 0 + 1*(1) = 1
+        %
+        % Line equation: tan(θ)*(x - cx) - (y - cy) = 0
+        % Signed distance: POSITIVE when y < line (below, invalid for Mode 1)
+        %                  NEGATIVE when y > line (above, valid for Mode 1)
+        signed_dist = (slope * (x(1) - cx) - (x(2) - cy)) / norm_factor;
+
         if signed_dist < 0
-            % Above the line (in wrong region for mode 1)
+            % Above Line A (in valid region O_1)
             dist_wedge = abs(signed_dist);
-            % Gradient points toward the line (downward and to the right)
-            % Normal to line ax + by + c = 0 is [a; b], here [slope; -1]
-            % We want to point toward valid region (below line), so negate
-            grad_wedge = -[slope; -1] / sqrt(slope^2 + 1);
+            % Gradient of d = |signed_dist| = -signed_dist
+            % grad(signed_dist) = [slope; -1]/norm, so grad(d) = [-slope; 1]/norm
+            % This points upward (away from line, into valid region)
+            grad_wedge = [-slope; 1] / norm_factor;
         else
-            % Below the line (in valid region)
-            dist_wedge = signed_dist;
-            % Gradient points away from line (downward and to the right)
-            grad_wedge = [slope; -1] / sqrt(slope^2 + 1);
+            % Below Line A (in complement of O_1 - WRONG region)
+            dist_wedge = MIN_DIST;
+            % Gradient points toward valid region (upward)
+            grad_wedge = [-slope; 1] / norm_factor;
         end
-        
+
     case 2
-        % O_2: above the lower wedge line (y - cy > -tan(θ) * (x - cx))
-        slope = -tan(theta_wedge);
-        signed_dist = ((x(2) - cy) - slope * (x(1) - cx)) / sqrt(slope^2 + 1);
-        
+        % O_2: BELOW Line B (for lower path around obstacle)
+        % Line B: y = cy - tan(θ)*(x - cx)  [negative slope line]
+        % At x=0 with cx=1: y = 0 - 1*(-1) = 1  (line is ABOVE origin)
+        % At x=2: y = 0 - 1*(1) = -1
+        %
+        % Line equation: tan(θ)*(x - cx) + (y - cy) = 0
+        % Signed distance: POSITIVE when y > line (above, invalid for Mode 2)
+        %                  NEGATIVE when y < line (below, valid for Mode 2)
+        signed_dist = (slope * (x(1) - cx) + (x(2) - cy)) / norm_factor;
+
         if signed_dist < 0
-            % Below the line (in wrong region for mode 2)
+            % Below Line B (in valid region O_2)
             dist_wedge = abs(signed_dist);
-            % Gradient points toward the line (upward and to the right)
-            % We want to point toward valid region (above line), so negate
-            grad_wedge = -[-slope; 1] / sqrt(slope^2 + 1);
+            % Gradient of d = |signed_dist| = -signed_dist
+            % grad(signed_dist) = [slope; 1]/norm, so grad(d) = [-slope; -1]/norm
+            % This points downward (away from line, into valid region)
+            grad_wedge = [-slope; -1] / norm_factor;
         else
-            % Above the line (in valid region)
-            dist_wedge = signed_dist;
-            % Gradient points away from line (upward and to the right)
-            grad_wedge = [-slope; 1] / sqrt(slope^2 + 1);
+            % Above Line B (in complement of O_2 - WRONG region)
+            dist_wedge = MIN_DIST;
+            % Gradient points toward valid region (downward)
+            grad_wedge = [-slope; -1] / norm_factor;
         end
-        
+
     otherwise
         error('Unknown mode q=%d', q);
 end
 
-% Combine obstacle and wedge distances
+% Combine obstacle and wedge distances - take minimum (closest boundary)
 if dist_obs <= 0
-    % Inside obstacle
+    % Inside obstacle - maximum penalty
     d = MIN_DIST;
     grad_d = grad_obs;
 elseif dist_obs <= dist_wedge
+    % Obstacle boundary is closer
     d = max(dist_obs, MIN_DIST);
     grad_d = grad_obs;
 else
+    % Wedge boundary is closer (or in wrong region where dist_wedge = MIN_DIST)
     d = max(dist_wedge, MIN_DIST);
     grad_d = grad_wedge;
 end

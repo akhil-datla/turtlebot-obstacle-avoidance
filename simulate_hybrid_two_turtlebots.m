@@ -13,6 +13,7 @@ clear; clc; close all;
 % - Mode q determines PATH around obstacle, not destination
 
 % Single target (both robots go here via different paths)
+% Per Example 5.2 in Sanfelice et al. (ACC 2006): target at (3, 0)
 params.xt = 3.0;
 params.yt = 0.0;
 
@@ -34,8 +35,8 @@ T_final  = 30.0;
 noise_std = 0.0;  % set >0 to study robustness (controller always uses y)
 
 %% Initial conditions for two virtual robots
-% Both robots go to SAME target (3, 0)
-% Mode determines which PATH around obstacle
+% Both robots navigate to the SAME target at (3, 0)
+% Mode determines which PATH around the obstacle (upper vs lower)
 
 % Robot 1: starts above, takes upper path (mode 1)
 x1 = [0; 0.5];
