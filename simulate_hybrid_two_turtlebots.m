@@ -25,9 +25,9 @@ params.obs_R  = 1/(20*sqrt(2));  % δ = 1/(20*sqrt(2)) ≈ 0.0354 from paper
 % Wedge angle for mode regions (per Figure 5)
 params.wedge_angle = pi/4;  % 45 degrees
 
-% Hybrid controller parameters
-hyb.mu     = 1.2;   % hysteresis factor (>1)
-hyb.lambda = 0.05;  % noise margin
+% Hybrid controller parameters (per paper Figure 5 caption)
+hyb.mu     = 1.1;   % hysteresis factor (>1), paper uses 1.1
+hyb.lambda = 0.09;  % noise margin, paper uses 0.09
 hyb.gamma  = 0.01;  % small relaxation near the goal
 
 dt       = 0.01;
@@ -36,15 +36,17 @@ noise_std = 0.0;  % set >0 to study robustness (controller always uses y)
 
 %% Initial conditions for two virtual robots
 % Both robots navigate to the SAME target at (3, 0)
-% Mode determines which PATH around the obstacle (upper vs lower)
+% Mode determines which PATH around the obstacle:
+%   Mode 1: excludes upper wedge → takes LOWER path (per paper Figure 5)
+%   Mode 2: excludes lower wedge → takes UPPER path (per paper Figure 5)
 
-% Robot 1: starts above, takes upper path (mode 1)
+% Robot 1: starts above x-axis, takes upper path (mode 2)
 x1 = [0; 0.5];
-q1 = 1;
+q1 = 2;
 
-% Robot 2: starts below, takes lower path (mode 2)
+% Robot 2: starts below x-axis, takes lower path (mode 1)
 x2 = [0; -0.5];
-q2 = 2;
+q2 = 1;
 
 %% Preallocate logging arrays
 N = floor(T_final / dt);
@@ -122,7 +124,7 @@ plot(params.obs_cx + params.obs_R*cos(th), params.obs_cy + params.obs_R*sin(th),
 plot(params.xt, params.yt, 'rx', 'MarkerSize', 10, 'LineWidth', 2);
 plot(x1_log(1, :), x1_log(2, :), 'b-', 'LineWidth', 1.5);
 plot(x2_log(1, :), x2_log(2, :), 'g-', 'LineWidth', 1.5);
-legend('Obstacle', 'Goal', 'Robot 1 (mode 1 start)', 'Robot 2 (mode 2 start)');
+legend('Obstacle', 'Goal', 'Robot 1 (mode 2: upper path)', 'Robot 2 (mode 1: lower path)');
 xlabel('x [m]'); ylabel('y [m]');
 title('Hybrid obstacle avoidance (virtual Turtlebots)');
 
