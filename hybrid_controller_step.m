@@ -32,7 +32,7 @@ V_active = [V1_y; V2_y];
 Vmin_y = min(V_active);
 Vq_y = V_active(q);
 
-% 3) Flow and jump conditions (Eqs. 12-16)
+% 3) Flow and jump conditions (Eqs . 8 -9 in documentation)
 can_flow = (Vq_y <= hyb.mu * Vmin_y) || (Vq_y <= hyb.gamma);
 can_jump = (Vq_y >= (hyb.mu - hyb.lambda) * Vmin_y);
 
